@@ -1,12 +1,14 @@
 # Mado
 
+**AI writes Markdown. Mado makes it readable.**
+
 https://madomd.com
 
-Mado is a local-first macOS SwiftUI Markdown editor with three editing layouts:
+Mado is a native macOS app for reading AI-generated Markdown — opening a plan, spec, report, or set of notes as a polished document, moving through folders of them, and sharing a clean page when the work is ready.
 
-- **Source**: edit the Markdown source directly.
-- **Visual**: edit a rendered rich-text document backed by the same Markdown buffer.
-- **Split**: edit Source on the left and Visual on the right, with shared content and synchronized scroll progress.
+Writing got faster; reading got harder. AI tools produce implementation plans, product specs, design notes, meeting summaries, and reports in seconds — but people still have to read them carefully, make decisions, and pass them along. Markdown is excellent for generation and storage. Mado is built for the reading step that comes next.
+
+Mado is **reading-first**. It renders Markdown as a document with clear typography, spacing, syntax highlighting, images, tables, task lists, and frontmatter. Lightweight **Source**, **Visual**, and **Split** editing is there when you need it, but the default experience stays focused on reading. Mado is not trying to replace VS Code, Obsidian, or a full writing environment.
 
 It is designed around plain Markdown files in a folder-based **Workspace**. Open any folder and Mado presents it as a live file tree; opening an individual Markdown file never changes the current Workspace.
 
@@ -14,57 +16,49 @@ Open a Workspace with **File ▸ Open Folder…** (⇧⌘O), the titlebar **＋*
 
 ```sh
 mado .
-mado ~/Documents/Notes
 ```
 
-The current Workspace is remembered across launches. Mado does not add sync, telemetry, remote storage, or network behavior; Markdown saves use atomic writes.
+The current Workspace is remembered across launches. Reading and editing local files stays local-first: Markdown saves use atomic writes, with no telemetry or background sync. Optional Pro **sharing** publishes a page only when you explicitly send a document to a destination.
 
 ## Features
+
+Mado is organized around four things you do with an AI-generated document: **read** it, **navigate** to it, **present** it, and **share** it. Editing is available reading-first, one keystroke away.
+
+### Reading
+
+- Document-first rendering with clear typography, spacing, and a reading-focused layout.
+- Markdown frontmatter support, collapsible metadata rendering, GFM raw HTML preservation, and GFM `<details>` handling.
+- Local image rendering for file paths and file URLs.
+- Theme-aware code block highlighting for JavaScript, Python, Rust, Go, Ruby, Java, Markdown, Bash, Zig, C, C++, Makefile, HTML, CSS, JSON, TOML, YAML, and Swift.
+- Theme switching from the Command Palette or **View ▸ Themes…**, with selected rows in the sidebar and palette styled from the active theme.
+
+### Navigation
 
 - Folder-based Workspace sidebar with expand/collapse, live filesystem updates, search, and automatic reveal of the current file.
 - Sidebar file actions: New File (⌘N), New Folder, inline Rename, Duplicate, drag-to-move inside the Workspace, Reveal in Finder, and recoverable Move to Trash with Undo (⌘Z).
 - Sidebar keyboard navigation while focused: ↑/↓ selection, ←/→ collapse or expand folders, Return rename, Space open, ⌘D duplicate, and ⌘⌫ move to Trash.
 - Command Palette with Recents (⌘Y), Commands (⌘⇧P), and Themes modes, all backed by one shared action catalog.
-- Markdown source editing with tree-sitter backed syntax highlighting.
-- Visual editing backed by Markdown serialization.
-- Split editing with shared Markdown content and synchronized scroll progress.
+- Recents and Favorites to return to important work.
+
+### Presentation (Pro)
+
+- Premium document presentations with designed typography, spacing, and layouts built for professional reading — e.g. **Brief**, **Ink**, and **Cadence**.
+- Preview before export, then export with the selected presentation.
+- Turns raw AI output into something you can send to a teammate, client, reviewer, or finance partner.
+
+### Sharing
+
+- Standalone **HTML** and **PDF** export that follows the on-screen theme, font size, content width, and table layout setting. PDF export uses the system print operation path, so long documents are paginated and wide content is scaled to page width.
+- One-click share to a readable hosted link — built-in **Connectors** for Mado Pages, CodeSandbox, and PageDrop — so others see the same document without installing Mado.
+- Add your own destination with a **Connector**: an *export destination* defined by a small `mado.json` manifest plus a `run.js` script (not a general plugin platform). See the connector developer guide on the website.
+- Manage shared pages — copy the link, open it, or reclaim it.
+
+### Editing
+
+Reading-first, but full editing is one keystroke away:
+
+- **Source**: edit the Markdown source directly, with tree-sitter backed syntax highlighting.
+- **Visual**: edit a rendered rich-text document backed by the same Markdown buffer.
+- **Split**: edit Source on the left and Visual on the right, with shared content and synchronized scroll progress.
 - WYSIWYG Markdown triggers for headings, list items, and fenced code input.
-- Markdown frontmatter support, collapsible metadata rendering, GFM raw HTML preservation, and GFM `<details>` export handling.
-- Local image rendering for file paths and file URLs.
-- Code block highlighting and source-mode fenced-code highlighting for JavaScript, Python, Rust, Go, Ruby, Java, Markdown, Bash, Zig, C, C++, Makefile, HTML, CSS, JSON, TOML, YAML, and Swift.
-- Theme switching from the Command Palette or **View ▸ Themes…**, with selected rows in the sidebar and palette styled from the active theme.
-- Open, Save, Save As, Export HTML, Export PDF, and drag-and-drop Markdown or folder opening.
-- HTML/PDF export that follows the on-screen theme, font size, content width, and table layout setting.
-- PDF export uses the system print operation path so long documents are paginated and wide content is scaled to page width.
-
-## Architecture
-
-Mado keeps Markdown parsing and rendering separate from the SwiftUI interface:
-
-- `MadoCore/Parser` owns Markdown parsing and turns a `swift-markdown` AST into a small render model (`RenderedMarkdown`, `MarkdownSpan`, `MarkdownBlock`).
-- `MadoCore/Render` owns Markdown serialization, preview HTML, document fonts, content-width/table-layout settings, and export templates.
-- `MadoCore/Storage` owns Workspace directory operations, recent-file metadata, and Markdown file IO.
-- `MadoCore/Editing` owns shared editor state, document titles, frontmatter parsing, paste classification, sidebar visibility state, and WYSIWYG Markdown triggers.
-- `MadoCore/Highlighter` owns the tree-sitter language registry and shared highlighting API.
-- `MadoCore/Theme` owns GPUI theme loading and the color roles shared by the app chrome, editors, sidebar, Command Palette, preview, and export.
-- `Mado` owns the macOS SwiftUI shell, Workspace sidebar, Command Palette, menu/action wiring, drag-and-drop open, source editor, and TextKit-based visual editor.
-- `MadoActionCatalog` is the single source for menu commands, Command Palette entries, and keyboard shortcuts.
-- `swift-markdown` is the parser dependency. Mado renders the AST itself so the editor can grow toward editable tables, task lists, custom blocks, and other long-term Markdown features without being tied to a read-only Markdown view.
-- Export is template-driven through `MarkdownExportTemplate`; `BasicHTMLTemplate` powers visual HTML export and `FileHTMLExportTemplate` wraps complete export documents.
-- Syntax highlighting uses `swift-tree-sitter` and local grammar query bundles. Markdown source highlighting uses the Markdown grammar directly, while fenced code blocks use Markdown injection queries to route content into the matching language grammar.
-
-`Textual` is a good candidate for a later high-quality read-only preview surface, but this first editor path keeps the WYSIWYG editor on `NSTextView` because it needs editable rich text and Markdown write-back.
-
-## Development
-
-Resolve dependencies and run tests:
-
-```sh
-swift test
-```
-
-Run the development app:
-
-```sh
-swift run
-```
+- Open, Save, Save As, and drag-and-drop Markdown or folder opening.
